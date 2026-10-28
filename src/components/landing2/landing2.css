@@ -1,0 +1,1582 @@
+/**
+ * Стили лендинга-2 — перенос дизайн-хендоффа `docs/landing-2.zip`
+ * (`TOLK Global - Landing.dc.html` + README §«Дизайн-токены»).
+ *
+ * Импортируется ТОЛЬКО из `Landing2Page.tsx` — Next отдаёт этот чанк
+ * лишь на маршрутах, которые реально импортируют дерево landing2/,
+ * поэтому в `/admin` и на «Сайте» (`/site`) он не появляется. Тот же
+ * приём изоляции, что у `design-system/design-system.css` лендинга-1.
+ *
+ * Почему настоящие классы, а не инлайн-стили как в прототипе и в
+ * лендинге-1: здесь есть hover'ы, медиазапросы, анимация, состояния
+ * `details[open]` и псевдоэлементы — инлайном они не выражаются вовсе.
+ *
+ * ЛОВУШКА: `src/app/globals.css` подключён в корневом layout и грузится
+ * на КАЖДОМ роуте, включая `/`. В нём есть голые `button { … }`,
+ * `button:hover` и `main { max-width: 720px }`. Класс (0,1,0) побеждает
+ * тэг (0,0,1), но только по тем свойствам, которые он задаёт сам —
+ * поэтому каждый класс кнопки ниже перечисляет background/color/border/
+ * border-radius/padding/font/cursor явно и имеет собственный :hover, а
+ * `.l2-main` сбрасывает max-width/margin/padding. Сужать голые селекторы
+ * в globals.css нельзя: `/admin/login` лежит вне `.adminContent` и
+ * потеряет оформление.
+ */
+
+.l2-root {
+  /* — Цвета (README §«Цвета») — */
+  --l2-petrol: #082826;
+  --l2-cream: #ede4d5;
+  --l2-cream-deep: #e1d5c0;
+  --l2-surface: #f7f2e7;
+  --l2-surface-hover: #fffbf2;
+  --l2-accent: #e44527;
+  --l2-accent-hover: #c4361b;
+  --l2-text-muted: #3a5350;
+  --l2-text-soft: #5a7370;
+  --l2-text-faint: #7c8f8c;
+  --l2-placeholder: #dbcfb9;
+  --l2-hairline: rgba(8, 40, 38, 0.14);
+  --l2-hairline-soft: rgba(8, 40, 38, 0.1);
+  --l2-dash: rgba(8, 40, 38, 0.25);
+  --l2-dash-strong: rgba(8, 40, 38, 0.3);
+  --l2-on-dark: rgba(237, 228, 213, 0.78);
+  --l2-on-dark-strong: rgba(237, 228, 213, 0.82);
+  --l2-on-dark-soft: rgba(237, 228, 213, 0.6);
+
+  /* — Шрифты (fonts.ts) — */
+  --l2-display: var(--l2-font-display), system-ui, sans-serif;
+  --l2-text: var(--l2-font-text), system-ui, sans-serif;
+
+  /* — Точечная сетка — */
+  --l2-dots-light: radial-gradient(rgba(8, 40, 38, 0.14) 1.2px, transparent 1.2px);
+  --l2-dots-dark: radial-gradient(rgba(237, 228, 213, 0.13) 1.2px, transparent 1.2px);
+
+  position: relative;
+  min-height: 100vh;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+  background: var(--l2-cream);
+  color: var(--l2-petrol);
+  font-family: var(--l2-text);
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Сбрасывает `main { max-width: 720px; margin: 0 auto; padding: 24px 16px }`
+   из globals.css — см. «ЛОВУШКА» в шапке файла. */
+.l2-main {
+  max-width: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* `:where()` — не украшение: это сброс, он обязан проигрывать обычным
+   одноклассовым правилам блоков. Без него `.l2-root h2` (0,1,1) бьёт
+   `.l2-how-title` (0,1,0), и `margin-bottom` заголовков секций и
+   `margin-top` абзацев из макета просто не применяются (поймано на
+   скриншотах прод-сборки: «Как это работает» и FAQ прилипали к первому
+   элементу списка, пояснения под цифрами — к подписи). `:where()`
+   обнуляет вклад самого тега, селектор становится (0,1,0) — и класс,
+   объявленный ниже, побеждает.
+
+   У ссылок ниже приём обратный, там (0,1,1) нужно СОХРАНИТЬ: в CSS-чанк
+   маршрута `/` попадает и голый `a { color: var(--sage-500) }` из
+   дизайн-системы лендинга-1 (см. CLAUDE.md, раздел про лендинг-2),
+   а порядок чанков между собой Turbopack не гарантирует. */
+.l2-root :where(h1, h2, h3) {
+  margin: 0;
+  font-family: var(--l2-display);
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  text-wrap: pretty;
+}
+
+.l2-root :where(p) {
+  margin: 0;
+  text-wrap: pretty;
+}
+
+.l2-root a {
+  color: var(--l2-petrol);
+  text-decoration: none;
+}
+
+.l2-root a:hover {
+  color: var(--l2-accent);
+}
+
+/* Ссылки, оформленные как кнопки. Базовое правило `.l2-root a` выше —
+   (0,1,1), а одноклассовые `.l2-btn*` — (0,1,0), то есть цвет ссылки
+   перебивал бы цвет кнопки: «Написать в Telegram» на тёмной секции
+   выходила пустой рамкой с петролевым текстом на петролевом фоне
+   (поймано на скриншоте прод-сборки). Поэтому для <a> цвет задаётся
+   селектором той же формы, а не повторным классом. Логотип шапки — там
+   же: в прототипе у него инлайновый цвет, который бьёт глобальный
+   `a:hover`, то есть на ховере он НЕ оранжевый. */
+.l2-root a.l2-btn,
+.l2-root a.l2-btn:hover,
+.l2-root a.l2-btn-ghost,
+.l2-root a.l2-btn-ghost:hover {
+  color: var(--l2-surface);
+}
+
+.l2-root a.l2-btn-link {
+  color: var(--l2-text-muted);
+}
+
+.l2-root a.l2-btn-link:hover {
+  color: var(--l2-accent);
+}
+
+.l2-root a.l2-header-logo,
+.l2-root a.l2-header-logo:hover {
+  color: var(--l2-petrol);
+}
+
+@keyframes l2-fade {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Плейсхолдер вместо незагруженного фото (в прототипе — image-slot). */
+.l2-photo-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  padding: 12px;
+  background: var(--l2-placeholder);
+  color: var(--l2-text-soft);
+  font-size: 13px;
+  line-height: 1.4;
+  text-align: center;
+}
+
+.l2-photo {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ── Кнопки ─────────────────────────────────────────────────────────── */
+
+.l2-btn,
+.l2-btn-ghost,
+.l2-btn-link {
+  font-family: var(--l2-text);
+  cursor: pointer;
+}
+
+.l2-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 52px;
+  padding: 16px 24px;
+  border: none;
+  border-radius: 14px;
+  background: var(--l2-accent);
+  color: var(--l2-surface);
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.l2-btn:hover {
+  background: var(--l2-accent-hover);
+  color: var(--l2-surface);
+}
+
+.l2-btn[disabled] {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.l2-btn[disabled]:hover {
+  background: var(--l2-accent);
+}
+
+/* Компактная оранжевая кнопка — шапка (radius 12, 15px) и блок-CTA
+   направлений (radius 12, 16px). */
+.l2-btn--sm {
+  min-height: 44px;
+  padding: 11px 18px;
+  border-radius: 12px;
+  font-size: 15px;
+  box-shadow: 0 1px 0 rgba(8, 40, 38, 0.18);
+}
+
+.l2-btn--md {
+  min-height: 48px;
+  padding: 14px 20px;
+  border-radius: 12px;
+  font-size: 16px;
+}
+
+/* Контурная кнопка на тёмной секции. */
+.l2-btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 52px;
+  padding: 16px 26px;
+  border: 1px solid rgba(237, 228, 213, 0.45);
+  border-radius: 14px;
+  background: none;
+  color: var(--l2-surface);
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.l2-btn-ghost:hover {
+  border-color: var(--l2-surface);
+  color: var(--l2-surface);
+}
+
+/* Текстовое действие с пунктирным подчёркиванием. */
+.l2-btn-link {
+  display: inline-block;
+  padding: 6px 2px;
+  border: none;
+  border-bottom: 1px dashed rgba(8, 40, 38, 0.45);
+  border-radius: 0;
+  background: none;
+  color: var(--l2-text-muted);
+  font-size: 16px;
+  font-weight: 400;
+}
+
+.l2-btn-link:hover {
+  background: none;
+  color: var(--l2-accent);
+}
+
+.l2-btn-link--quiet {
+  align-self: flex-start;
+  border-bottom-color: rgba(8, 40, 38, 0.4);
+  color: var(--l2-text-soft);
+  font-size: 15px;
+}
+
+/* ── Шапка ──────────────────────────────────────────────────────────── */
+
+.l2-header {
+  position: sticky;
+  top: 0;
+  z-index: 60;
+  background: rgba(237, 228, 213, 0.93);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(8, 40, 38, 0.12);
+}
+
+.l2-header-top {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 14px 20px;
+}
+
+.l2-header-logo {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 10px;
+  color: var(--l2-petrol);
+}
+
+.l2-logo {
+  display: block;
+  flex: 0 0 auto;
+}
+
+.l2-header-cta {
+  flex: 0 0 auto;
+  margin-left: auto;
+}
+
+.l2-header-nav {
+  display: flex;
+  gap: 18px;
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0 20px 12px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  color: var(--l2-text-soft);
+  font-size: 14px;
+}
+
+.l2-header-nav a {
+  color: var(--l2-text-soft);
+  white-space: nowrap;
+}
+
+/* ── Hero ───────────────────────────────────────────────────────────── */
+
+.l2-hero {
+  position: relative;
+  background-color: var(--l2-cream);
+  background-image: var(--l2-dots-light);
+  background-size: 22px 22px;
+}
+
+.l2-hero-inner {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 36px;
+  align-items: center;
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 44px 20px 40px;
+}
+
+.l2-hero-col {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  animation: l2-fade 0.6s ease both;
+}
+
+.l2-hero-badge {
+  align-self: flex-start;
+  padding: 6px 14px;
+  border: 1px dashed var(--l2-dash-strong);
+  border-radius: 999px;
+  background: rgba(8, 40, 38, 0.07);
+  color: var(--l2-text-muted);
+  font-size: 13px;
+  letter-spacing: 0.01em;
+}
+
+.l2-hero-title {
+  font-size: clamp(27px, 5.2vw, 45px);
+  line-height: 1.06;
+}
+
+.l2-hero-subtitle {
+  max-width: 30em;
+  color: var(--l2-text-muted);
+  font-size: clamp(16px, 2.2vw, 19px);
+  line-height: 1.6;
+}
+
+.l2-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+
+.l2-hero-trust {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  align-items: center;
+  padding-top: 6px;
+  border-top: 1px dashed var(--l2-dash);
+  color: var(--l2-text-soft);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.l2-hero-trust-dot {
+  color: var(--l2-accent);
+}
+
+.l2-hero-media {
+  position: relative;
+  justify-self: center;
+  width: 100%;
+  max-width: 420px;
+}
+
+.l2-hero-arch {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  border: 1px solid var(--l2-hairline);
+  border-radius: 50% 50% 18px 18px / 32% 32% 18px 18px;
+  background: var(--l2-placeholder);
+}
+
+.l2-hero-note {
+  position: absolute;
+  left: -8px;
+  bottom: 22px;
+  max-width: 210px;
+  padding: 12px 14px;
+  border: 1px solid var(--l2-hairline);
+  border-radius: 14px;
+  background: var(--l2-surface);
+  box-shadow: 0 10px 30px rgba(8, 40, 38, 0.1);
+}
+
+/* Фото Hero выключено в CMS: арки нет, и карточке-ремарке не от чего
+   позиционироваться — возвращаем её в обычный поток. Селектор из двух
+   классов (0,2,0) — выигрывает у одноклассового `.l2-hero-note` выше. */
+.l2-hero-media--no-photo .l2-hero-note {
+  position: static;
+  left: auto;
+  bottom: auto;
+  max-width: 320px;
+}
+
+.l2-hero-note-title {
+  color: var(--l2-petrol);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.l2-hero-note-text {
+  margin-top: 4px;
+  color: var(--l2-text-soft);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+/* ── Общие заголовки секций ─────────────────────────────────────────── */
+
+.l2-h2 {
+  font-size: clamp(22px, 3.7vw, 33px);
+  line-height: 1.12;
+}
+
+/* ── «Мы не визовый центр» ──────────────────────────────────────────── */
+
+.l2-notvisa {
+  border-top: 1px dashed var(--l2-dash);
+}
+
+.l2-notvisa-inner {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 32px;
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 56px 20px;
+}
+
+.l2-notvisa-text {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  color: var(--l2-text-muted);
+  font-size: clamp(15px, 2vw, 17px);
+  line-height: 1.65;
+}
+
+.l2-notvisa-highlight {
+  padding: 16px 18px;
+  border-left: 2px dashed var(--l2-accent);
+  border-radius: 0 14px 14px 0;
+  background: var(--l2-cream-deep);
+  color: var(--l2-petrol);
+}
+
+/* ── Как это работает ───────────────────────────────────────────────── */
+
+.l2-how {
+  background: var(--l2-cream-deep);
+  border-top: 1px solid var(--l2-hairline-soft);
+}
+
+.l2-how-inner {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 56px 20px;
+}
+
+.l2-how-title {
+  margin-bottom: 34px;
+}
+
+.l2-how-steps {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+}
+
+/* Сквозная пунктирная линия маршрута. */
+.l2-how-route {
+  position: absolute;
+  left: 19px;
+  top: 14px;
+  bottom: 26px;
+  border-left: 2px dashed rgba(8, 40, 38, 0.32);
+}
+
+.l2-how-step {
+  position: relative;
+  display: flex;
+  gap: 18px;
+  align-items: flex-start;
+}
+
+.l2-how-num {
+  display: flex;
+  flex: 0 0 40px;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--l2-petrol);
+  color: var(--l2-surface);
+  font-family: var(--l2-text);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+/* Последний шаг («Карточка») — акцентный, README §«Как это работает». */
+.l2-how-step:last-child .l2-how-num {
+  background: var(--l2-accent);
+}
+
+.l2-how-body {
+  padding-top: 4px;
+}
+
+.l2-how-body h3 {
+  margin-bottom: 6px;
+  font-size: 19px;
+}
+
+.l2-how-body p {
+  color: var(--l2-text-muted);
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+/* ── Направления ────────────────────────────────────────────────────── */
+
+.l2-countries-inner {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 56px 20px;
+}
+
+.l2-countries-intro {
+  max-width: 46em;
+  margin-top: 14px;
+  color: var(--l2-text-muted);
+  font-size: clamp(15px, 2vw, 17px);
+  line-height: 1.65;
+}
+
+.l2-countries-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 28px;
+}
+
+.l2-country {
+  overflow: hidden;
+  border: 1px solid var(--l2-hairline);
+  border-radius: 16px;
+  background: var(--l2-surface);
+}
+
+.l2-country-head {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  min-height: 56px;
+  padding: 16px 18px;
+  background: var(--l2-petrol);
+  color: var(--l2-surface);
+  cursor: pointer;
+  list-style: none;
+}
+
+.l2-country-head::-webkit-details-marker {
+  display: none;
+}
+
+.l2-country-place {
+  flex: 0 0 auto;
+  color: var(--l2-on-dark-soft);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.l2-country-program {
+  flex: 1;
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.l2-country-sign {
+  color: var(--l2-accent);
+  font-size: 20px;
+  line-height: 1;
+}
+
+.l2-country-sign::after {
+  content: '+';
+}
+
+.l2-country[open] .l2-country-sign::after {
+  content: '−';
+}
+
+.l2-country-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 18px;
+  color: var(--l2-text-muted);
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.l2-country-fact {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  color: var(--l2-petrol);
+  font-size: 14px;
+}
+
+.l2-country-fact::before {
+  content: '';
+  width: 24px;
+  border-top: 1px dashed var(--l2-accent);
+}
+
+.l2-countries-cta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 26px;
+  padding: 20px;
+  border: 1px dashed var(--l2-dash-strong);
+  border-radius: 16px;
+  background: var(--l2-cream-deep);
+}
+
+.l2-countries-cta p {
+  max-width: 34em;
+  color: var(--l2-petrol);
+  font-size: 16px;
+  line-height: 1.55;
+}
+
+.l2-countries-cta strong {
+  font-weight: 600;
+}
+
+/* ── Почему TOLK / Финальный CTA (тёмные секции) ────────────────────── */
+
+.l2-dark {
+  background-color: var(--l2-petrol);
+  background-image: var(--l2-dots-dark);
+  background-size: 22px 22px;
+  color: var(--l2-surface);
+}
+
+.l2-why-inner {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 56px 20px;
+}
+
+.l2-why-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 28px;
+  margin-top: 32px;
+}
+
+.l2-why-value {
+  color: var(--l2-accent);
+  font-family: var(--l2-display);
+  font-size: clamp(34px, 6.6vw, 52px);
+  font-weight: 700;
+  line-height: 1;
+}
+
+.l2-why-label {
+  margin-top: 8px;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.l2-why-note {
+  margin-top: 8px;
+  color: var(--l2-on-dark);
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+.l2-why-refund {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px dashed rgba(237, 228, 213, 0.35);
+}
+
+.l2-why-refund img {
+  flex: 0 0 18px;
+  width: 18px;
+  height: auto;
+  margin-top: 6px;
+}
+
+.l2-why-refund p {
+  max-width: 40em;
+  font-size: clamp(16px, 2.2vw, 19px);
+  line-height: 1.6;
+}
+
+/* ── Кейсы ──────────────────────────────────────────────────────────── */
+
+.l2-cases-inner {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 56px 20px;
+}
+
+.l2-cases-notice {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin-top: 14px;
+}
+
+.l2-cases-notice img {
+  flex: 0 0 11px;
+  width: 11px;
+  height: auto;
+  margin-top: 3px;
+}
+
+.l2-cases-notice p {
+  color: var(--l2-text-soft);
+  font-size: 13.5px;
+  line-height: 1.55;
+}
+
+.l2-cases-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+  gap: 18px;
+  margin-top: 26px;
+}
+
+.l2-case {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--l2-hairline);
+  border-radius: 16px;
+  background: var(--l2-surface);
+}
+
+.l2-case-program {
+  padding: 11px 18px;
+  background: var(--l2-petrol);
+  color: var(--l2-on-dark-strong);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.l2-case-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+}
+
+.l2-case-quote-mark {
+  width: 30px;
+  height: auto;
+  opacity: 0.85;
+}
+
+.l2-case-quote {
+  color: var(--l2-petrol);
+  font-size: 17px;
+  line-height: 1.6;
+}
+
+.l2-case-author {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-top: auto;
+}
+
+.l2-case-avatar {
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+  overflow: hidden;
+  border-radius: 999px 999px 8px 8px / 46% 46% 8px 8px;
+  background: var(--l2-placeholder);
+}
+
+.l2-case-name {
+  color: var(--l2-text-soft);
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.l2-case-name span {
+  color: var(--l2-petrol);
+}
+
+/* ── Мини-CTA ───────────────────────────────────────────────────────── */
+
+.l2-minicta {
+  background: var(--l2-cream-deep);
+  border-top: 1px solid var(--l2-hairline-soft);
+  border-bottom: 1px solid var(--l2-hairline-soft);
+}
+
+.l2-minicta-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 48px 20px;
+  text-align: center;
+}
+
+.l2-dash-rule {
+  width: 100%;
+  max-width: 220px;
+  border-top: 2px dashed var(--l2-dash-strong);
+}
+
+.l2-minicta-title {
+  font-size: clamp(20px, 3.1vw, 26px);
+  line-height: 1.15;
+}
+
+.l2-minicta-text {
+  max-width: 34em;
+  color: var(--l2-text-muted);
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.l2-minicta-inner .l2-btn {
+  padding: 15px 26px;
+}
+
+/* ── FAQ ────────────────────────────────────────────────────────────── */
+
+.l2-faq-inner {
+  max-width: 820px;
+  margin: 0 auto;
+  padding: 56px 20px;
+}
+
+.l2-faq-title {
+  margin-bottom: 26px;
+}
+
+.l2-faq-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.l2-faq-item {
+  border-top: 1px solid rgba(8, 40, 38, 0.16);
+}
+
+.l2-faq-item:last-child {
+  border-bottom: 1px solid rgba(8, 40, 38, 0.16);
+}
+
+.l2-faq-head {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  min-height: 56px;
+  padding: 18px 0;
+  color: var(--l2-petrol);
+  font-size: clamp(17px, 2.4vw, 20px);
+  font-weight: 600;
+  cursor: pointer;
+  list-style: none;
+}
+
+.l2-faq-head::-webkit-details-marker {
+  display: none;
+}
+
+.l2-faq-question {
+  flex: 1;
+}
+
+.l2-faq-sign {
+  color: var(--l2-accent);
+  font-size: 22px;
+  line-height: 1;
+}
+
+.l2-faq-sign::after {
+  content: '+';
+}
+
+.l2-faq-item[open] .l2-faq-sign::after {
+  content: '−';
+}
+
+.l2-faq-answer {
+  max-width: 46em;
+  padding: 0 0 20px;
+  color: var(--l2-text-muted);
+  font-size: 16px;
+  line-height: 1.65;
+}
+
+/* ── Финальный CTA ──────────────────────────────────────────────────── */
+
+.l2-final {
+  position: relative;
+  overflow: hidden;
+}
+
+.l2-final-mark {
+  position: absolute;
+  right: -40px;
+  top: -30px;
+  width: min(38vw, 300px);
+  opacity: 0.16;
+  pointer-events: none;
+}
+
+.l2-final-inner {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  max-width: 820px;
+  margin: 0 auto;
+  padding: 60px 20px;
+  text-align: center;
+}
+
+.l2-final-title {
+  font-size: clamp(24px, 4.2vw, 37px);
+  line-height: 1.1;
+}
+
+.l2-final-text {
+  max-width: 32em;
+  color: var(--l2-on-dark-strong);
+  font-size: clamp(16px, 2.2vw, 19px);
+  line-height: 1.6;
+}
+
+.l2-final-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  justify-content: center;
+  margin-top: 6px;
+}
+
+.l2-final-actions .l2-btn {
+  padding: 16px 26px;
+}
+
+/* ── Подвал ─────────────────────────────────────────────────────────── */
+
+.l2-footer {
+  background: var(--l2-cream);
+}
+
+.l2-footer-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 40px 20px;
+}
+
+.l2-footer-top {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.l2-footer-brand {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 22em;
+  color: var(--l2-petrol);
+}
+
+.l2-footer-tagline {
+  color: var(--l2-text-muted);
+  font-size: 16px;
+  line-height: 1.45;
+}
+
+.l2-footer-links {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: 15px;
+}
+
+.l2-footer-links a {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  min-height: 44px;
+}
+
+.l2-footer-icon {
+  flex: 0 0 20px;
+}
+
+.l2-footer-disclaimer {
+  max-width: 60em;
+  padding-top: 16px;
+  border-top: 1px dashed var(--l2-dash);
+  color: var(--l2-text-faint);
+  font-size: 12.5px;
+  line-height: 1.55;
+}
+
+/* Нижняя строка: «© TOLK GLOBAL LTD · Legal · Privacy Policy · …».
+   Ссылки на выключенные в CMS страницы сюда не доходят (см.
+   hiddenLegalPaths в Landing2Page.tsx). */
+.l2-footer-legal {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  color: var(--l2-text-faint);
+  font-size: 12.5px;
+  line-height: 1.55;
+}
+
+.l2-footer-legal-item {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.l2-footer-dot {
+  color: var(--l2-text-faint);
+}
+
+/* (0,2,1) — ровно столько же, сколько у базового `.l2-root a`, но ниже
+   по файлу, поэтому побеждает. Ховер приходится задавать отдельно по
+   той же причине: `.l2-root a:hover` тоже (0,2,1) и стоит выше. */
+.l2-root .l2-footer-legal a {
+  color: var(--l2-text-muted);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.l2-root .l2-footer-legal a:hover {
+  color: var(--l2-accent);
+}
+
+/* ── Юридические страницы (/legal/*) ────────────────────────────────── */
+
+/* Ширина контейнера — как у подвала (1000px), чтобы левый край текста
+   совпадал с логотипом подвала; сам текст ограничен 46em по той же
+   причине, что и подписи квиза, — длина строки для чтения. */
+.l2-legal {
+  display: block;
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: clamp(32px, 5vw, 56px) 20px clamp(48px, 7vw, 80px);
+}
+
+/* Заголовки юридических страниц — единственные на сайте, где в одно
+   слово укладывается «конфиденциальности»: на 375px оно шире колонки,
+   а `.l2-root` режет всё, что вылезло (overflow-x: hidden), — на
+   скриншоте мобильного заголовок обрывался посреди слова без всякого
+   скролла. `hyphens` переносит по слогам (html lang="ru"),
+   `overflow-wrap` остаётся страховкой там, где переносов нет. */
+.l2-legal-title {
+  max-width: 18em;
+  margin-bottom: 24px;
+  overflow-wrap: break-word;
+  font-size: clamp(24px, 5.5vw, 44px);
+  line-height: 1.12;
+}
+
+/* Переносы по слогам — только там, где слово физически не помещается в
+   строку (на 1440 браузер всё равно ставил бы дефис, если считает так
+   красивее: «Политика конфиденци-альности» в три строки при свободном
+   месте справа). */
+@media (max-width: 520px) {
+  .l2-legal-title {
+    hyphens: auto;
+  }
+}
+
+.l2-legal-empty {
+  color: var(--l2-text-faint);
+  font-size: 16px;
+}
+
+.l2-legal-body {
+  max-width: 46em;
+  overflow-wrap: break-word;
+  color: var(--l2-text-muted);
+  font-size: 16px;
+  line-height: 1.65;
+}
+
+/* Разметка приходит из CMS как Markdown, набор тегов заранее не известен —
+   поэтому здесь, в отличие от остальных секций, стилизуются сами теги
+   внутри одного контейнера, а не классы на каждом элементе. */
+.l2-legal-body h2 {
+  margin: 32px 0 12px;
+  color: var(--l2-petrol);
+  font-size: clamp(20px, 2.4vw, 26px);
+  line-height: 1.2;
+}
+
+.l2-legal-body h3 {
+  margin: 24px 0 10px;
+  color: var(--l2-petrol);
+  font-size: 18px;
+  line-height: 1.25;
+}
+
+.l2-legal-body h4 {
+  margin: 20px 0 8px;
+  color: var(--l2-petrol);
+  font-family: var(--l2-display);
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.l2-legal-body p {
+  margin: 0 0 14px;
+}
+
+.l2-legal-body ul,
+.l2-legal-body ol {
+  margin: 0 0 16px;
+  padding-left: 22px;
+}
+
+.l2-legal-body li {
+  margin-bottom: 8px;
+}
+
+.l2-legal-body strong {
+  color: var(--l2-petrol);
+  font-weight: 600;
+}
+
+.l2-legal-body hr {
+  margin: 28px 0;
+  border: none;
+  border-top: 1px dashed var(--l2-dash);
+}
+
+.l2-legal-body blockquote {
+  margin: 0 0 16px;
+  padding: 12px 16px;
+  border-left: 2px solid var(--l2-hairline);
+  color: var(--l2-text-soft);
+}
+
+/* Реквизиты нередко приходят таблицей — на узком экране она должна
+   прокручиваться внутри себя, а не растягивать страницу (у `.l2-root`
+   стоит overflow-x: hidden, растянутая таблица просто обрезалась бы). */
+.l2-legal-body table {
+  display: block;
+  overflow-x: auto;
+  width: 100%;
+  margin: 0 0 16px;
+  border-collapse: collapse;
+  font-size: 15px;
+}
+
+.l2-legal-body th,
+.l2-legal-body td {
+  padding: 8px 12px;
+  border: 1px solid var(--l2-hairline);
+  text-align: left;
+  vertical-align: top;
+}
+
+.l2-legal-body th {
+  color: var(--l2-petrol);
+  font-weight: 600;
+}
+
+/* Та же история со специфичностью, что у ссылок подвала выше. */
+.l2-root .l2-legal-body a {
+  color: var(--l2-accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.l2-root .l2-legal-body a:hover {
+  color: var(--l2-accent-hover);
+}
+
+/* ── Квиз (оверлей) ─────────────────────────────────────────────────── */
+
+.l2-quiz {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  background-color: var(--l2-cream);
+  background-image: radial-gradient(rgba(8, 40, 38, 0.12) 1.2px, transparent 1.2px);
+  background-size: 22px 22px;
+  color: var(--l2-petrol);
+}
+
+.l2-quiz-bar {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 16px 20px;
+}
+
+.l2-quiz-step-label {
+  color: var(--l2-text-soft);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.l2-quiz-progress {
+  display: flex;
+  flex: 1;
+  gap: 6px;
+  align-items: center;
+}
+
+.l2-quiz-dot {
+  flex: 1;
+  border-top: 2px dashed var(--l2-dash-strong);
+}
+
+.l2-quiz-dot--done {
+  border-top-style: solid;
+  border-top-color: var(--l2-accent);
+}
+
+.l2-quiz-close {
+  min-height: 44px;
+  padding: 8px;
+  border: none;
+  border-radius: 0;
+  background: none;
+  color: var(--l2-text-soft);
+  font-family: var(--l2-text);
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.l2-quiz-close:hover {
+  background: none;
+  color: var(--l2-accent);
+}
+
+.l2-quiz-screen {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 18px;
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 12px 20px 48px;
+  animation: l2-fade 0.35s ease both;
+}
+
+.l2-quiz-title {
+  font-size: clamp(21px, 3.9vw, 30px);
+  line-height: 1.15;
+}
+
+.l2-quiz-hint {
+  color: var(--l2-text-soft);
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+.l2-quiz-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.l2-quiz-option {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  width: 100%;
+  min-height: 56px;
+  padding: 16px 18px;
+  border: 1px solid rgba(8, 40, 38, 0.18);
+  border-radius: 14px;
+  background: var(--l2-surface);
+  color: var(--l2-petrol);
+  font-family: var(--l2-text);
+  font-size: 16.5px;
+  font-weight: 400;
+  line-height: 1.35;
+  text-align: left;
+  cursor: pointer;
+}
+
+.l2-quiz-option:hover {
+  border-color: var(--l2-accent);
+  background: var(--l2-surface-hover);
+}
+
+.l2-quiz-mark {
+  display: flex;
+  flex: 0 0 20px;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border: 1px solid var(--l2-dash-strong);
+  border-radius: 6px;
+  color: transparent;
+  font-size: 13px;
+  line-height: 1;
+}
+
+.l2-quiz-option[aria-pressed='true'] .l2-quiz-mark,
+.l2-quiz-mark--on {
+  border-color: var(--l2-accent);
+  background: var(--l2-accent);
+  color: var(--l2-surface);
+}
+
+.l2-quiz-next {
+  align-self: flex-start;
+  padding: 15px 24px;
+}
+
+.l2-quiz-result-head {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.l2-quiz-result-head img {
+  flex: 0 0 16px;
+  width: 16px;
+  height: auto;
+  margin-top: 8px;
+}
+
+.l2-quiz-result-title {
+  font-size: clamp(20px, 3.4vw, 27px);
+  line-height: 1.2;
+}
+
+.l2-quiz-lead {
+  max-width: 40em;
+  color: var(--l2-text-muted);
+  font-size: 16px;
+  line-height: 1.65;
+}
+
+.l2-quiz-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  align-items: center;
+}
+
+.l2-quiz-input {
+  width: 100%;
+  min-height: 56px;
+  padding: 16px 18px;
+  border: 1px solid rgba(8, 40, 38, 0.22);
+  border-radius: 14px;
+  background: var(--l2-surface);
+  color: var(--l2-petrol);
+  font-family: var(--l2-text);
+  font-size: 17px;
+}
+
+.l2-quiz-input:focus {
+  outline: none;
+  border-color: var(--l2-accent);
+}
+
+.l2-quiz-consent {
+  max-width: 46em;
+  color: var(--l2-text-soft);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* Блок согласий под формой контактов. Рамка — не украшение: закон
+   требует, чтобы согласие, стоящее рядом с другими положениями, было
+   ясно выделено (Landing2Quiz.tsx). */
+.l2-quiz-consents {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-width: 46em;
+  padding: 16px 18px;
+  border: 1px dashed var(--l2-dash);
+  border-radius: 14px;
+  background: rgba(255, 251, 242, 0.5);
+}
+
+.l2-quiz-consent-item {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  color: var(--l2-text-muted);
+  font-size: 13.5px;
+  line-height: 1.5;
+  cursor: pointer;
+}
+
+/* `appearance` не сбрасывается: нативная галочка узнаваема и доступна
+   с клавиатуры без единой строки JS, нужен только размер и цвет. */
+.l2-quiz-checkbox {
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+  margin: 1px 0 0;
+  accent-color: var(--l2-accent);
+  cursor: pointer;
+}
+
+.l2-quiz-consent-text {
+  display: block;
+  cursor: pointer;
+}
+
+/* Часть подписи, открывающая полный текст согласия: обычная ссылка на
+   страницу с тем же документом, обычный клик перехватывается и вместо
+   перехода открывает попап (Landing2Quiz.tsx). Специфичность (0,2,1) —
+   как у ссылок подвала, см. комментарий там. */
+.l2-root a.l2-quiz-consent-link {
+  color: var(--l2-text-muted);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.l2-root a.l2-quiz-consent-link:hover {
+  color: var(--l2-accent);
+}
+
+/* Попап с полным текстом согласия — поверх оверлея квиза (у того
+   z-index: 100). */
+.l2-quiz-doc {
+  position: fixed;
+  inset: 0;
+  z-index: 110;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(8, 40, 38, 0.55);
+  overflow-y: auto;
+}
+
+.l2-quiz-doc-card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  align-items: flex-start;
+  width: 100%;
+  max-width: 640px;
+  max-height: 85vh;
+  overflow-y: auto;
+  padding: 24px;
+  border-radius: 18px;
+  background: var(--l2-surface);
+  color: var(--l2-text-muted);
+}
+
+.l2-quiz-doc-title {
+  font-size: 20px;
+  line-height: 1.25;
+}
+
+.l2-quiz-doc-text {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+/* Ссылки на юридические страницы в строке согласия — открываются в
+   новой вкладке (Landing2Quiz.tsx), чтобы не терять прогресс теста.
+   Специфичность — как у ссылок подвала, см. комментарий там. */
+.l2-root .l2-quiz-consent a {
+  color: var(--l2-text-muted);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.l2-root .l2-quiz-consent a:hover {
+  color: var(--l2-accent);
+}
+
+.l2-quiz-error {
+  max-width: 46em;
+  padding: 12px 14px;
+  border: 1px dashed var(--l2-accent);
+  border-radius: 14px;
+  color: var(--l2-petrol);
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+/* ── Доступность движения ───────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .l2-hero-col,
+  .l2-quiz-screen {
+    animation: none;
+  }
+}
